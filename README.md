@@ -1,14 +1,7 @@
-# Symposion
+# Symposion Fork
 
-A conference management solution from Eldarion.
+This fork of Symposion exists to handle issues we've had with reviews on the SciPy 2014 conference site.
 
-Built with the generous support of the Python Software Foundation.
+[Review dashboard is blocked for users who vote -0 or -1](https://github.com/scipy-conference/SciPy-2014/issues/111)
+[Production: reviews for -0 and -1 cause server error](https://github.com/scipy-conference/SciPy-2014/issues/78)
 
-See http://eldarion.com/symposion/ for commercial support, customization and hosting
-
-## Quickstart
-
-If you're interested in running symposion locally, we have built a [basic
-Django startproject template that includes Symposion][1].
-
-[1]: https://github.com/pinax/pinax-project-symposion
