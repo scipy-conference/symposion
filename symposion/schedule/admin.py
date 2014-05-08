@@ -6,7 +6,8 @@ from symposion.schedule.models import Schedule, Day, Room, SlotKind, Slot, SlotR
 admin.site.register(Schedule)
 admin.site.register(
     Day,
-    list_display=("date", "schedule")
+    #list_display=("date", "schedule")
+    # TODO this line displays useful information but intermittently causes: FieldDoesNotExist: Day has no field named 's'
 )
 admin.site.register(
     Room,
