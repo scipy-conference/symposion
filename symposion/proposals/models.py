@@ -130,6 +130,8 @@ class ProposalBase(models.Model):
             "kind": self.kind.name,
         }
 
+    def __unicode__(self):
+        return "%s, %s, %s" % (self.title, self.speaker.name, self.kind.name)
 
 reversion.register(ProposalBase)
 
