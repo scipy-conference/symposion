@@ -78,7 +78,7 @@ class ScheduleSectionForm(forms.Form):
         times = []
         for x in [data[self.START_KEY], data[self.END_KEY]]:
             try:
-                time_obj = time.strptime(x, '%I:%M %p')
+                time_obj = time.strptime(x, '%H:%M')
             except:
                 return messages.ERROR, u'Malformed time found: %s.' % x
             time_obj = datetime(100, 1, 1, time_obj.tm_hour, time_obj.tm_min, 00)
