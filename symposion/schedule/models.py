@@ -52,7 +52,8 @@ class SlotKind(models.Model):
     
     schedule = models.ForeignKey(Schedule)
     label = models.CharField(max_length=50)
-    
+    presentation = models.BooleanField(default=True, help_text="Whether or not this slot is a presentation")
+
     def __unicode__(self):
         return self.label
 

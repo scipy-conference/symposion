@@ -40,7 +40,6 @@ def schedule_conference(request):
 
     ctx = {
         "sections": sections,
-        "selectable_slot_kinds": selectable_slot_kinds(),
     }
     return render(request, "schedule/schedule_conference.html", ctx)
 
@@ -57,7 +56,6 @@ def schedule_detail(request, slug=None):
     ctx = {
         "schedule": schedule,
         "days": days,
-        "selectable_slot_kinds": selectable_slot_kinds(),
     }
     return render(request, "schedule/schedule_detail.html", ctx)
 
@@ -121,17 +119,8 @@ def schedule_edit(request, slug=None):
         "schedule": schedule,
         "days": days,
         "form": form,
-        "selectable_slot_kinds": selectable_slot_kinds(),
     }
     return render(request, "schedule/schedule_edit.html", ctx)
-
-
-def selectable_slot_kinds():
-    # HACK
-    # I want the form to be customizable and right now the template
-    # I'm working from has "talk" and "tutorial" hardcoded as the only
-    # grid kinds that have affordances to select from the proposals list
-    return ["talk", "tutorial", "sprint", "bof"]
 
 
 @login_required
