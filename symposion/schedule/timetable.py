@@ -36,8 +36,7 @@ class TimeTable(object):
                     slot.rowspan = TimeTable.rowspan(times, slot.start, slot.end)
                     slot.colspan = slot.room_count
                     row["slots"].append(slot)
-            if row["slots"] or next_time is None:
-                yield row
+            yield row
     
     @staticmethod
     def rowspan(times, start, end):
