@@ -9,7 +9,6 @@ from django.db import transaction
 
 from symposion.conference.models import Section
 from symposion.reviews.models import promote_proposal
-from symposion.schedule import models
 from symposion.schedule.models import Day, Room, Schedule, Slot, SlotKind, SlotRoom
 from symposion.proposals.models import ProposalBase
 
@@ -17,9 +16,9 @@ from symposion.proposals.models import ProposalBase
 
 presentations example
 
-date,time_start,time_end,kind,room,proposal_id,description
-7/8/2014,14:45,15:00,Scientific Computing in Education,Grand Ballroom,185,
-7/10/2014,12:15,13:30,Lunch,Room 203,,
+section_slug,date,time_start,time_end,kind,room,proposal_id,description
+talks-posters,7/8/2014,14:45,15:00,Scientific Computing in Education,Grand Ballroom,185,
+talks-posters,7/10/2014,12:15,13:30,Lunch,Room 203,,
 
 rooms example
 
@@ -33,22 +32,22 @@ tutorials,Room 102,1
 slotkinds example
 
 section_slug,slot_kind,presentation_menu
-talks-posters,Astronomy and Astrophysics Symposium,TRUE
-talks-posters,Bioinformatics Symposium,TRUE
-talks-posters,Break,FALSE
+talks-posters,Astronomy and Astrophysics Symposium,1
+talks-posters,Bioinformatics Symposium,1
+talks-posters,Break,0
 
 """
 
-def create_presentation_slots(schedule, data):
+def create_presentation_slots(data):
     """ Creates a SlotRoom based on a csv file
 
     Room, SlotKind, Day must exist
-    If a Slot does not exist it is created
     """
 
     for row in data:
         print row
-        date, start, end, kind_label, room_name, proposal_id = parse_presentation(row)
+        section_slug, date, start, end, kind_label, room_name, proposal_id, description = parse_presentation(row)
+        schedule = get_schedule(row['section_slug'])
 
         room = Room.objects.get(schedule=schedule, name=room_name)
         slotkind = SlotKind.objects.get(schedule=schedule, label=kind_label)
@@ -59,6 +58,7 @@ def create_presentation_slots(schedule, data):
             day=day,
             start=start,
             end=end,
+            content_override=description,
         )
         SlotRoom.objects.create(slot=slot, room=room)
 
@@ -77,6 +77,7 @@ def assign_presentation(slot, section, proposal_id):
     presentation.section = section
     presentation.save()
     print 'assigning presentation for %s' % proposal_id
+    slot.assign(presentation)
 
 
 def create_rooms(data):
@@ -94,7 +95,7 @@ def create_slot_kinds(data):
     for row in data:
         print row
         schedule = get_schedule(row['section_slug'])
-        presentation = row['presentation_menu'] == 'TRUE'
+        presentation = row.get('presentation_menu', 0) == '1'
         SlotKind.objects.create(
             schedule=schedule,
             label=row['slot_kind'],
@@ -104,11 +105,11 @@ def create_slot_kinds(data):
 def parse_presentation(row):
     """ parses row from presentation csv file  
     """
-    # date,time_start,time_end,kind,room,proposal_id,description
+    # section_slug,date,time_start,time_end,kind,room,proposal_id,description
     date = datetime.strptime(row['date'], "%m/%d/%Y")
     start = get_time(row['time_start'])
     end = get_time(row['time_end'])
-    return date, start, end, row['kind'], row['room'], row.get('proposal_id', '')
+    return row['section_slug'], date, start, end, row['kind'], row['room'], row.get('proposal_id', ''), row.get('description', '')
 
 
 def get_time(timestring):
@@ -140,9 +141,9 @@ class Command(BaseCommand):
 
     presentations.csv example
     
-    date,time_start,time_end,kind,room,proposal_id,description
-    7/8/2014,14:45,15:00,Scientific Computing in Education,Grand Ballroom,185,
-    7/10/2014,12:15,13:30,Lunch,Room 203,,
+    section_slug,date,time_start,time_end,kind,room,proposal_id,description
+    talks-posters,7/8/2014,14:45,15:00,Scientific Computing in Education,Grand Ballroom,185,
+    talks-posters,7/10/2014,12:15,13:30,Lunch,Room 203,,
     
     rooms.csv example
     
@@ -165,21 +166,6 @@ class Command(BaseCommand):
     modeltypes = ['presentations', 'rooms', 'slotkinds']
     option_list = BaseCommand.option_list + (
         make_option(
-            '-c',
-            '--clean',
-            action='store_true',
-            dest='clean',
-            default=False,
-            help='Clobber everything',
-        ),
-        make_option(
-            '-s',
-            '--section',
-            dest='section',
-            default='talks-posters',
-            help='Create schedule objects for this conference section',
-        ),
-        make_option(
             '-m',
             '--modeltype',
             dest='modeltype',
@@ -192,27 +178,14 @@ class Command(BaseCommand):
         ),
     )
 
-    def clean(self):
-        """ Delete schedule models
-        """
-        models.SlotRoom.objects.all().delete()
-        models.Presentation.objects.all().delete()
-        models.Slot.objects.all().delete()
-        models.SlotKind.objects.all().delete()
-        models.Room.objects.all().delete()
-
     @transaction.commit_on_success
     def handle(self, *args, **options):
         assert os.path.isfile(args[0]), 'not a file: %s' % args[0]
 
         data = get_csv_data(args[0])
 
-        if options['clean']:
-            self.clean()
-
         if options['modeltype'] == 'presentations':
-            schedule = get_schedule(options['section'])
-            create_presentation_slots(schedule, data)
+            create_presentation_slots(data)
         elif options['modeltype'] == 'rooms':
             create_rooms(data)
         elif options['modeltype'] == 'slotkinds':
