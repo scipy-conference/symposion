@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from symposion.conference.models import Section
+from symposion.reviews.models import promote_proposal
 from symposion.schedule import models
 from symposion.schedule.models import Day, Room, Schedule, Slot, SlotKind, SlotRoom
 from symposion.proposals.models import ProposalBase
@@ -53,13 +54,29 @@ def create_presentation_slots(schedule, data):
         slotkind = SlotKind.objects.get(schedule=schedule, label=kind_label)
         day = Day.objects.get(schedule=schedule, date=date)
 
-        slot, created = Slot.objects.get_or_create(
+        slot = Slot.objects.create(
             kind=slotkind,
             day=day,
             start=start,
             end=end,
         )
         SlotRoom.objects.create(slot=slot, room=room)
+
+        if proposal_id:
+            assign_presentation(slot, schedule.section, proposal_id)
+
+
+def assign_presentation(slot, section, proposal_id):
+    try:
+        proposal = ProposalBase.objects.get(pk=proposal_id)
+    except ProposalBase.DoesNotExist:
+        print 'No proposal found with pk %s, skipping' % proposal_id
+        return
+    presentation = promote_proposal(proposal)
+    presentation.slot = slot
+    presentation.section = section
+    presentation.save()
+    print 'assigning presentation for %s' % proposal_id
 
 
 def create_rooms(data):
