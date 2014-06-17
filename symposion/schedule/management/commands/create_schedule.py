@@ -41,7 +41,8 @@ talks-posters,Break,0
 def create_presentation_slots(data):
     """ Creates a SlotRoom based on a csv file
 
-    Room, SlotKind, Day must exist
+    Room and SlotKind must exist
+    If Day does not exist it will be created
     """
 
     for row in data:
@@ -51,16 +52,18 @@ def create_presentation_slots(data):
 
         room = Room.objects.get(schedule=schedule, name=room_name)
         slotkind = SlotKind.objects.get(schedule=schedule, label=kind_label)
-        day = Day.objects.get(schedule=schedule, date=date)
+        day, create = Day.objects.get_or_create(schedule=schedule, date=date)
 
         slot = Slot.objects.create(
             kind=slotkind,
             day=day,
             start=start,
             end=end,
-            content_override=description,
         )
         SlotRoom.objects.create(slot=slot, room=room)
+
+        if description != '':
+            slot.content_override = description
 
         if proposal_id:
             assign_presentation(slot, schedule.section, proposal_id)
