@@ -6,7 +6,7 @@ from symposion.schedule import models
 
 class Command(BaseCommand):
     help = """
-    Delete schedule except for conference Section and Days
+    Delete schedule, but not Conference or Section
     """
     @transaction.commit_on_success
     def handle(self, *args, **options):
@@ -15,3 +15,4 @@ class Command(BaseCommand):
         models.Slot.objects.all().delete()
         models.SlotKind.objects.all().delete()
         models.Room.objects.all().delete()
+        models.Day.objects.all().delete()
