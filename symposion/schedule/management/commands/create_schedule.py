@@ -64,6 +64,7 @@ def create_presentation_slots(data):
 
         if description != '':
             slot.content_override = description
+            slot.save()
 
         if proposal_id:
             assign_presentation(slot, schedule.section, proposal_id)
